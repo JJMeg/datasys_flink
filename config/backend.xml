@@ -1,0 +1,92 @@
+<configuration>
+    <properties>
+        <version>0.000.1</version>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <schedule>* * * * *</schedule>
+    </properties>
+
+    <dag>
+        <node dependencies="">weiflink</node>
+    </dag>
+
+    <nodes>
+        <node name="weiflink" type="weiflink">
+            <runtime>
+                <binPath></binPath>
+                <env>flink</env>
+                <args>
+                    <command>-m yarn-cluster -d true -yjm 1024 -yn 100 -ytm 4096 -ynm Flink-test-taks -yqu default -ys 10 </command>
+                    <yarnJar></yarnJar>
+                </args>
+            </runtime>
+
+            <properties>
+                <jobName>trigger_status_delay_to_kafka</jobName>
+                <isCheckPoint>false</isCheckPoint>
+                <checkpointTime></checkpointTime>
+                <checkpointMode></checkpointMode>
+                <checkpointTimeOut></checkpointTimeOut>
+                <checkpointFlag>20190312</checkpointFlag>
+
+                <rocksdbBlockCache>4294967296</rocksdbBlockCache>
+                <!--当数据量大的时候，设置为false，数据量小的时候，设置为true。 -->
+                <usePreOptions>true</usePreOptions>
+                <!--启用rocd db-->
+                <useRocksDB>true</useRocksDB>
+                <!--Kafka 0.10之后的版本中，Kafka的消息可以携带timestamp,指出了事件发生的时间(参考Apache Flink的event time)或者消息被写入到Kafka broker的时间-->
+                <StreamTimeCharacteristic>EventTime</StreamTimeCharacteristic>
+            </properties>
+
+            <dag>
+                <task dependencies="">KafkaInput1</task>
+                <task dependencies="KafkaInput1">TriggerStatusDelayProcess</task>
+                <task dependencies="TriggerStatusDelayProcess">Kafka010Output</task>
+            </dag>
+
+            <task name="KafkaInput1" type="FlinkInput">
+                <className>com.weibo.datasys.weiflink.plugin.input.datastream.Kafka08Input</className>
+                <!--<className>com.weibo.datasys.weiflink.plugin.input.datastream.Kafka11Input</className>-->
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>KafkaInput1</dsName>
+                </fixedArgs>
+
+                <args>
+                    <bootstrap>kfk9261.eos.grid.sina.com.cn:9092</bootstrap>
+                    <!-- -1表示从最新的消息开始消费数据，0表示从最早的消息开始消费数据，-2表示从group 的 offset 开始消费数据-->
+                    <offset>-1</offset>
+                    <parallelism>84</parallelism>
+                </args>
+            </task>
+
+            <task name="TriggerStatusDelayProcess"  type="FlinkProcess">
+                <className>com.weibo.datasys.weiflink.plugin.task.datastream.process.TriggerStatusDelayProcess</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>TriggerStatusDelayProcess</dsName>
+                </fixedArgs>
+                <args>
+                    <timer>180</timer>
+                </args>
+            </task>
+
+            <task name="Kafka010Output" type="FlinkOutput">
+                <className>com.weibo.datasys.weiflink.plugin.task.datastream.output.Kafka010Output</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>Kafka010Output</dsName>
+                </fixedArgs>
+                <args>
+                    <topic>kafka_waic_test</topic>
+
+
+                </args>
+            </task>
+
+        </node>
+    </nodes>
+</configuration>

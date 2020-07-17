@@ -1,0 +1,130 @@
+<configuration>
+    <properties>
+        <version>0.000.1</version>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <schedule>* * * * *</schedule>
+    </properties>
+
+    <dag>
+        <node dependencies="">weiflink</node>
+    </dag>
+
+    <nodes>
+        <node name="weiflink" type="weiflink">
+            <runtime>
+                <binPath></binPath>
+                <env>flink</env>
+                <args>
+                    <command>-m yarn-cluster -d true -yjm 1024 -yn 100 -ytm 4096 -ynm Flink-test-taks -yqu default -ys 10 </command>
+                    <yarnJar></yarnJar>
+                </args>
+            </runtime>
+
+            <properties>
+                <jobName>trigger_status_delay_to_kafka</jobName>
+            </properties>
+
+            <dag>
+                <task dependencies="">KafkaInput1</task>
+                <task dependencies="">KafkaInput2</task>
+                <task dependencies="">KafkaInput3</task>
+
+                <task dependencies="KafkaInput1,KafkaInput2,KafkaInput3">process1</task>
+
+                <task dependencies="process1">Kafka010Output</task>
+                <task dependencies="process1">Kafka010Output1</task>
+            </dag>
+
+            <task name="KafkaInput1" type="FlinkInput">
+                <className>com.jjmeg.feeder.datasys.flink.common.input.TestInput</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>KafkaInput1</dsName>
+                </fixedArgs>
+
+                <args>
+                    <parallelism>84</parallelism>
+                </args>
+            </task>
+
+            <task name="KafkaInput2" type="FlinkInput">
+                <className>com.jjmeg.feeder.datasys.flink.common.input.TestInput</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>KafkaInput1</dsName>
+                </fixedArgs>
+
+                <args>
+
+                    <parallelism>84</parallelism>
+                </args>
+            </task>
+
+            <task name="KafkaInput3" type="FlinkInput">
+                <className>com.jjmeg.feeder.datasys.flink.common.input.TestInput</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>KafkaInput1</dsName>
+                </fixedArgs>
+
+                <args>
+
+                    <parallelism>84</parallelism>
+                </args>
+            </task>
+
+            <task name="process1"  type="FlinkProcess">
+                <className>com.jjmeg.feeder.datasys.flink.common.process.process</className>
+                <fixedArgs>
+                    <emitType></emitType>
+                    <emitSchema></emitSchema>
+                    <dsName></dsName>
+                </fixedArgs>
+                <args>
+                    <timer>180</timer>
+                </args>
+            </task>
+
+            <task name="process2"  type="FlinkProcess">
+                <className>com.jjmeg.feeder.datasys.flink.common.process.process</className>
+                <fixedArgs>
+                    <emitType></emitType>
+                    <emitSchema></emitSchema>
+                    <dsName></dsName>
+                </fixedArgs>
+                <args>
+                    <timer>180</timer>
+                </args>
+            </task>
+
+            <task name="Kafka010Output" type="FlinkOutput">
+                <className>com.jjmeg.feeder.datasys.flink.common.output.Kafka08Output</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>Kafka010Output</dsName>
+                </fixedArgs>
+                <args>
+                    <parallelism>20</parallelism>
+                </args>
+            </task>
+
+            <task name="Kafka010Output1" type="FlinkOutput">
+                <className>com.jjmeg.feeder.datasys.flink.common.output.Kafka08Output</className>
+                <fixedArgs>
+                    <emitType>Flink.DataStream.String</emitType>
+                    <emitSchema>field</emitSchema>
+                    <dsName>Kafka010Output</dsName>
+                </fixedArgs>
+                <args>
+                    <parallelism>20</parallelism>
+                </args>
+            </task>
+
+        </node>
+    </nodes>
+</configuration>
